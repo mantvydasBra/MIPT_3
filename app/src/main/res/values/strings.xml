@@ -22,6 +22,7 @@
     <string name="equal">=</string>
     <string name="dot">.</string>
     <string name="plusMinus">±</string>
+    <string name="sqrRoot">√</string>
 
     <string name="calculator">Calculator</string>
 
