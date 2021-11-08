@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.mariuszgromada.math.mxparser.Expression;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -87,9 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnAdd.setOnClickListener(view -> updateText("+"));
 
-        btnEqual.setOnClickListener(view -> {
-
-        });
+        btnEqual.setOnClickListener(view -> calculate());
 
         btnDot.setOnClickListener(view -> updateText("."));
 
@@ -108,23 +108,44 @@ public class MainActivity extends AppCompatActivity {
         }
         // Don't allow to start the equation with specific symbols
         else if (textHolder.length() == 0) {
-            if (charToAdd.equals("±") || charToAdd.equals("×") || charToAdd.equals("÷"))
+            if (charToAdd.equals("±") || charToAdd.equals("×") || charToAdd.equals("÷") || charToAdd.equals("+")) {
+                txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
                 return;
+            }
         }
-        // TODO: fix this shit
         // Check if last character is a symbol, if yes - don't allow to add a repeating one
         else if (charToAdd.equals("×") || charToAdd.equals("÷") || charToAdd.equals("-") || charToAdd.equals("+")) {
+            String specialChars = "×÷+-";
             String lastChar = String.valueOf(textHolder.charAt(textHolder.length() - 1));
-            // Check if there are already any symbols
-            String[] numbers = textHolder.toString().split("×÷-+");
-            if (charToAdd.equals(lastChar)) {
-                return;
+            String nextToLastChar = "";
+            // Check if there is more than 2 chars, to not error out
+            // Store a character if it's a symbol (for when there is *-, ÷- etc.. to change it)
+            if (textHolder.length() > 2) {
+                String temporary = String.valueOf(textHolder.charAt(textHolder.length() - 2));
+                if (specialChars.contains(temporary))
+                    nextToLastChar = temporary;
             }
-            else if (charToAdd.equals("-") && !lastChar.equals('-')) {
-            }
-            else if (numbers.length != 0){
+            System.out.println(nextToLastChar);
+            // If last symbol is + and entered is -, swap them.
+            if (lastChar.equals("+") && charToAdd.equals("-")) {
                 deleteChar();
             }
+            else if (nextToLastChar.isEmpty()) {
+                // Otherwise, delete last character if char to add isn't a -
+                if (specialChars.contains(lastChar) && !charToAdd.equals("-")) {
+                        deleteChar();
+                }
+                // If entered symbol is same as the last, delete it.
+                else if (lastChar.equals(charToAdd)) {
+                    deleteChar();
+                }
+            }
+            // If last char is - and there is another symbol in front of it, change them with new symbol.
+            else if (specialChars.contains(lastChar)) {
+                deleteChar();
+                deleteChar();
+            }
+
         }
         // Split numbers by symbols to check for floating point operator
         else if (charToAdd.equals(".")) {
@@ -151,4 +172,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void calculate () {
+        txtCalculatorScreen.setTextColor(Color.WHITE);
+        txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+        String equation = txtCalculatorScreen.getText().toString();
+        if (equation.length() < 2) {
+            return;
+        }
+
+        equation = equation.replaceAll("÷", "/");
+        equation = equation.replaceAll("×", "*");
+        equation = equation.replaceAll("(\\d)+√", "$1*");
+        equation = equation.replaceAll("√+(\\d)", "sqrt($1)");
+
+        Expression exp = new Expression(equation);
+
+        String result = String.valueOf(exp.calculate());
+
+        txtCalculatorScreen.setText(result);
+
+    }
 }
