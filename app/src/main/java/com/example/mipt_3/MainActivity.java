@@ -8,6 +8,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.mariuszgromada.math.mxparser.Expression;
 
@@ -19,6 +20,8 @@ public class MainActivity extends AppCompatActivity {
             btnDot, btnPlusMinus;
     ImageButton btnDel;
     TextView txtCalculatorScreen;
+    ConstraintLayout mainLayout;
+    Boolean solved = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         btnDot = findViewById(R.id.btnDot);
         btnPlusMinus = findViewById(R.id.btnPlusMinus);
         txtCalculatorScreen = findViewById(R.id.txtCalculatorScreen);
+        mainLayout = findViewById(R.id.mainLayout);
 
         btnZero.setOnClickListener(view -> updateText("0"));
 
@@ -69,13 +73,14 @@ public class MainActivity extends AppCompatActivity {
         btnNine.setOnClickListener(view -> updateText("9"));
 
         btnClear.setOnClickListener(view -> {
-            if (!txtCalculatorScreen.getText().toString().equals("")) {
-                txtCalculatorScreen.setText("");
-                txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
-            }
+            checkForSolved();
+            clearText();
         });
 
-        btnDel.setOnClickListener(view -> deleteChar());
+        btnDel.setOnClickListener(view -> {
+            checkForSolved();
+            deleteChar();
+        });
 
         btnMod.setOnClickListener(view -> updateText("%"));
 
@@ -89,7 +94,10 @@ public class MainActivity extends AppCompatActivity {
 
         btnAdd.setOnClickListener(view -> updateText("+"));
 
-        btnEqual.setOnClickListener(view -> calculate());
+        btnEqual.setOnClickListener(view -> {
+            calculate();
+            solved = true;
+        });
 
         btnDot.setOnClickListener(view -> updateText("."));
 
@@ -101,8 +109,11 @@ public class MainActivity extends AppCompatActivity {
         txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
         CharSequence textHolder = txtCalculatorScreen.getText();
 
+        // First clear text if there was a solved equation recently
+        checkForSolved();
+
         // If there is only one number and it's a 0, replace the 0 by new number
-        if (textHolder.length() == 1 && textHolder.charAt(0) == '0') {
+        if (textHolder.length() == 1 && textHolder.charAt(0) == '0' && !charToAdd.equals(".") ) {
             txtCalculatorScreen.setText(String.format("%s", charToAdd));
             return;
         }
@@ -149,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         }
         // Split numbers by symbols to check for floating point operator
         else if (charToAdd.equals(".")) {
-            String[] numbers = textHolder.toString().split("×÷-+");
+            String[] numbers = textHolder.toString().split("[×÷\\-+]");
             if (numbers.length != 0) {
                 String temp = numbers[numbers.length - 1]; // Get last member of array, since we only need to check for current number
                 for (int i = 0; i < temp.length(); i++) {
@@ -172,6 +183,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void clearText () {
+        if (!txtCalculatorScreen.getText().toString().equals("")) {
+            txtCalculatorScreen.setText("");
+            txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+        }
+    }
+
+    public void checkForSolved () {
+        if (solved) {
+            clearText();
+            solved = false;
+        }
+    }
+
     public void calculate () {
         txtCalculatorScreen.setTextColor(Color.WHITE);
         txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
@@ -189,7 +214,9 @@ public class MainActivity extends AppCompatActivity {
 
         String result = String.valueOf(exp.calculate());
 
-        txtCalculatorScreen.setText(result);
+
+
+        txtCalculatorScreen.setText(String.format("%s\n%s", txtCalculatorScreen.getText(), result));
 
     }
 }
