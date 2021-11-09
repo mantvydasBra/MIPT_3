@@ -29,6 +29,7 @@
                 android:hint="@string/calculator"
                 android:maxWidth="60dp"
                 android:maxHeight="60dp"
+                android:maxLength="40"
                 android:textAlignment="textStart"
                 android:textColor="@color/black"
                 android:textColorHint="@color/white"

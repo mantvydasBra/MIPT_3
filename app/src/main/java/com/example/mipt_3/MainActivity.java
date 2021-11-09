@@ -12,6 +12,9 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.mariuszgromada.math.mxparser.Expression;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,7 +104,33 @@ public class MainActivity extends AppCompatActivity {
 
         btnDot.setOnClickListener(view -> updateText("."));
 
-        btnPlusMinus.setOnClickListener(view -> updateText("±"));
+        btnPlusMinus.setOnClickListener(view -> changeSign());
+    }
+
+    public void changeSign () {
+        txtCalculatorScreen.setTextColor(Color.WHITE);
+        CharSequence textHolder = txtCalculatorScreen.getText();
+        txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+        // StringBuilder to make it more simple
+        StringBuilder sb = new StringBuilder(textHolder);
+        // If it's the first character, just add it
+        if (textHolder.length() == 0) {
+            txtCalculatorScreen.setText("-");
+        }
+        // if there is only one character and it's a -, just remove it
+        else if (textHolder.length() == 1 && textHolder.charAt(0) == '-') {
+            deleteChar();
+        }
+        // If there is a - in front, remove it from front
+        else if (textHolder.charAt(0) == '-') {
+            txtCalculatorScreen.setText(textHolder.toString().substring(1));
+        }
+        // Else, just add in front of string with StringBuilder.
+        else {
+            sb.insert(0, '-');
+            textHolder = sb.toString();
+            txtCalculatorScreen.setText(textHolder);
+        }
     }
 
     public void updateText(String charToAdd) {
@@ -119,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         }
         // Don't allow to start the equation with specific symbols
         else if (textHolder.length() == 0) {
-            if (charToAdd.equals("±") || charToAdd.equals("×") || charToAdd.equals("÷") || charToAdd.equals("+")) {
+            if (charToAdd.equals("%") || charToAdd.equals("×") || charToAdd.equals("÷") || charToAdd.equals("+")) {
                 txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
                 return;
             }
@@ -136,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
                 if (specialChars.contains(temporary))
                     nextToLastChar = temporary;
             }
-            System.out.println(nextToLastChar);
             // If last symbol is + and entered is -, swap them.
             if (lastChar.equals("+") && charToAdd.equals("-")) {
                 deleteChar();
@@ -175,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
         txtCalculatorScreen.setText(String.format("%s%s", txtCalculatorScreen.getText(), charToAdd));
     }
 
+    // Delete 1 character
     public void deleteChar () {
         if (!txtCalculatorScreen.getText().toString().equals("")) {
             txtCalculatorScreen.setText(txtCalculatorScreen.getText().toString().substring(0, txtCalculatorScreen.getText().length() - 1));
@@ -183,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Delete whole text
     public void clearText () {
         if (!txtCalculatorScreen.getText().toString().equals("")) {
             txtCalculatorScreen.setText("");
@@ -190,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Check if it was solved recently
     public void checkForSolved () {
         if (solved) {
             clearText();
@@ -201,22 +232,38 @@ public class MainActivity extends AppCompatActivity {
         txtCalculatorScreen.setTextColor(Color.WHITE);
         txtCalculatorScreen.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
         String equation = txtCalculatorScreen.getText().toString();
+        // Don't do anything if there are less than 2 digits
         if (equation.length() < 2) {
             return;
         }
 
+        // Replace special chars
         equation = equation.replaceAll("÷", "/");
         equation = equation.replaceAll("×", "*");
-        equation = equation.replaceAll("(\\d)+√", "$1*");
+        equation = equation.replaceAll("(\\d)√", "$1*√");
         equation = equation.replaceAll("√+(\\d)", "sqrt($1)");
 
-        Expression exp = new Expression(equation);
+        Pattern pattern = Pattern.compile("/0");
+        Matcher matcher = pattern.matcher(equation);
+        // Check for division by 0
+        if (matcher.find()) {
+            txtCalculatorScreen.setText(String.format("%s\n%s", txtCalculatorScreen.getText(), "Can't divide by 0!"));
+            return;
+        }
 
+
+        Expression exp = new Expression(equation);
+        // For debugging
+        exp.checkSyntax();
+        System.out.println(exp.getErrorMessage());
         String result = String.valueOf(exp.calculate());
 
+        if (result.equals("NaN")) {
+            result = "Error!";
+        }
 
-
-        txtCalculatorScreen.setText(String.format("%s\n%s", txtCalculatorScreen.getText(), result));
+        // Setting max chars for answer to not flood the textview
+        txtCalculatorScreen.setText(String.format("%s\n%.13s", txtCalculatorScreen.getText(), result));
 
     }
 }
