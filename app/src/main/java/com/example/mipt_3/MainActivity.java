@@ -264,6 +264,5 @@ public class MainActivity extends AppCompatActivity {
 
         // Setting max chars for answer to not flood the textview
         txtCalculatorScreen.setText(String.format("%s\n%.13s", txtCalculatorScreen.getText(), result));
-
     }
 }
